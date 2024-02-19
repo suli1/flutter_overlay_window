@@ -1,168 +1,153 @@
-package flutter.overlay.window.flutter_overlay_window;
+package flutter.overlay.window.flutter_overlay_window
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
-import android.provider.Settings;
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import io.flutter.FlutterInjector
+import io.flutter.embedding.engine.FlutterEngineCache
+import io.flutter.embedding.engine.FlutterEngineGroup
+import io.flutter.embedding.engine.dart.DartExecutor.DartEntrypoint
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.BasicMessageChannel
+import io.flutter.plugin.common.JSONMessageCodec
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+class FlutterOverlayWindowPlugin : FlutterPlugin, ActivityAware,
+    BasicMessageChannel.MessageHandler<Any?>, MethodCallHandler, ActivityResultListener {
 
-import io.flutter.FlutterInjector;
-import io.flutter.embedding.engine.FlutterEngine;
-import io.flutter.embedding.engine.FlutterEngineCache;
-import io.flutter.embedding.engine.FlutterEngineGroup;
-import io.flutter.embedding.engine.dart.DartExecutor;
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.embedding.engine.plugins.activity.ActivityAware;
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
-import io.flutter.plugin.common.BasicMessageChannel;
-import io.flutter.plugin.common.JSONMessageCodec;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry;
-
-public class FlutterOverlayWindowPlugin implements
-        FlutterPlugin, ActivityAware, BasicMessageChannel.MessageHandler, MethodCallHandler,
-        PluginRegistry.ActivityResultListener {
-
-    private MethodChannel channel;
-    private Context context;
-    private Activity mActivity;
-    private BasicMessageChannel<Object> messenger;
-    private Result pendingResult;
-    final int REQUEST_CODE_FOR_OVERLAY_PERMISSION = 1248;
-
-    @Override
-    public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-        this.context = flutterPluginBinding.getApplicationContext();
-        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.CHANNEL_TAG);
-        channel.setMethodCallHandler(this);
-
-        messenger = new BasicMessageChannel<>(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.MESSENGER_TAG,
-                JSONMessageCodec.INSTANCE);
-        messenger.setMessageHandler(this);
-
-        WindowSetup.messenger = messenger;
-        WindowSetup.messenger.setMessageHandler(this);
+    companion object {
+        const val REQUEST_CODE_FOR_OVERLAY_PERMISSION = 1248
     }
 
-    @Override
-    public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-        pendingResult = result;
-        if (call.method.equals("checkPermission")) {
-            result.success(checkOverlayPermission());
-        } else if (call.method.equals("requestPermission")) {
+    private var channel: MethodChannel? = null
+    private var context: Context? = null
+    private var mActivity: Activity? = null
+    private var messenger: BasicMessageChannel<Any>? = null
+    private var pendingResult: MethodChannel.Result? = null
+
+
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPluginBinding) {
+        context = flutterPluginBinding.applicationContext
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, OverlayConstants.CHANNEL_TAG)
+        channel!!.setMethodCallHandler(this)
+        messenger = BasicMessageChannel(
+            flutterPluginBinding.binaryMessenger,
+            OverlayConstants.MESSENGER_TAG,
+            JSONMessageCodec.INSTANCE
+        )
+        messenger!!.setMessageHandler(this)
+        WindowSetup.messenger = messenger
+        WindowSetup.messenger!!.setMessageHandler(this)
+    }
+
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        pendingResult = result
+        if (call.method == "checkPermission") {
+            result.success(checkOverlayPermission())
+        } else if (call.method == "requestPermission") {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-                intent.setData(Uri.parse("package:" + mActivity.getPackageName()));
-                mActivity.startActivityForResult(intent, REQUEST_CODE_FOR_OVERLAY_PERMISSION);
+                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                intent.setData(Uri.parse("package:" + mActivity!!.packageName))
+                mActivity!!.startActivityForResult(intent, REQUEST_CODE_FOR_OVERLAY_PERMISSION)
             } else {
-                result.success(true);
+                result.success(true)
             }
-        } else if (call.method.equals("showOverlay")) {
+        } else if (call.method == "showOverlay") {
             if (!checkOverlayPermission()) {
-                result.error("PERMISSION", "overlay permission is not enabled", null);
-                return;
+                result.error("PERMISSION", "overlay permission is not enabled", null)
+                return
             }
-            Integer height = call.argument("height");
-            Integer width = call.argument("width");
-            String alignment = call.argument("alignment");
-            String flag = call.argument("flag");
-            String overlayTitle = call.argument("overlayTitle");
-            String overlayContent = call.argument("overlayContent");
-            String notificationVisibility = call.argument("notificationVisibility");
-            boolean enableDrag = call.argument("enableDrag");
-            String positionGravity = call.argument("positionGravity");
-
-            WindowSetup.width = width != null ? width : -1;
-            WindowSetup.height = height != null ? height : -1;
-            WindowSetup.enableDrag = enableDrag;
-            WindowSetup.setGravityFromAlignment(alignment != null ? alignment : "center");
-            WindowSetup.setFlag(flag != null ? flag : "flagNotFocusable");
-            WindowSetup.overlayTitle = overlayTitle;
-            WindowSetup.overlayContent = overlayContent == null ? "" : overlayContent;
-            WindowSetup.positionGravity = positionGravity;
-            WindowSetup.setNotificationVisibility(notificationVisibility);
-
-            final Intent intent = new Intent(context, OverlayService.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            context.startService(intent);
-            result.success(null);
-        } else if (call.method.equals("isOverlayActive")) {
-            result.success(OverlayService.isRunning);
-        } else if (call.method.equals("closeOverlay")) {
+            val height = call.argument<Int>("height")
+            val width = call.argument<Int>("width")
+            val alignment = call.argument<String>("alignment")
+            val flag = call.argument<String>("flag")
+            val overlayTitle = call.argument<String>("overlayTitle")
+            val overlayContent = call.argument<String>("overlayContent")
+            val notificationVisibility = call.argument<String>("notificationVisibility")!!
+            val enableDrag = call.argument<Boolean>("enableDrag")!!
+            val positionGravity = call.argument<String>("positionGravity")!!
+            WindowSetup.width = width ?: -1
+            WindowSetup.height = height ?: -1
+            WindowSetup.enableDrag = enableDrag
+            WindowSetup.setGravityFromAlignment(alignment ?: "center")
+            WindowSetup.setFlag(flag ?: "flagNotFocusable")
+            WindowSetup.overlayTitle = overlayTitle ?: ""
+            WindowSetup.overlayContent = overlayContent ?: ""
+            WindowSetup.positionGravity = positionGravity
+            WindowSetup.setNotificationVisibility(notificationVisibility)
+            val intent = Intent(context, OverlayService::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME)
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            context!!.startService(intent)
+            result.success(null)
+        } else if (call.method == "isOverlayActive") {
+            result.success(OverlayService.isRunning)
+        } else if (call.method == "closeOverlay") {
             if (OverlayService.isRunning) {
-                final Intent i = new Intent(context, OverlayService.class);
-                i.putExtra(OverlayService.INTENT_EXTRA_IS_CLOSE_WINDOW, true);
-                context.startService(i);
-                result.success(true);
+                val i = Intent(context, OverlayService::class.java)
+                i.putExtra(OverlayService.INTENT_EXTRA_IS_CLOSE_WINDOW, true)
+                context!!.startService(i)
+                result.success(true)
             }
         } else {
-            result.notImplemented();
+            result.notImplemented()
         }
-
     }
 
-    @Override
-    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-        channel.setMethodCallHandler(null);
-        WindowSetup.messenger.setMessageHandler(null);
+    override fun onDetachedFromEngine(binding: FlutterPluginBinding) {
+        channel?.setMethodCallHandler(null)
+        WindowSetup.messenger?.setMessageHandler(null)
     }
 
-    @Override
-    public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
-        mActivity = binding.getActivity();
-        FlutterEngineGroup enn = new FlutterEngineGroup(context);
-        DartExecutor.DartEntrypoint dEntry = new DartExecutor.DartEntrypoint(
-                FlutterInjector.instance().flutterLoader().findAppBundlePath(),
-                "overlayMain");
-        FlutterEngine engine = enn.createAndRunEngine(context, dEntry);
-        FlutterEngineCache.getInstance().put(OverlayConstants.CACHED_TAG, engine);
-        binding.addActivityResultListener(this);
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        mActivity = binding.activity
+        val enn = FlutterEngineGroup(context!!)
+        val dEntry = DartEntrypoint(
+            FlutterInjector.instance().flutterLoader().findAppBundlePath(), "overlayMain"
+        )
+        val engine = enn.createAndRunEngine(context!!, dEntry)
+        FlutterEngineCache.getInstance().put(OverlayConstants.CACHED_TAG, engine)
+        binding.addActivityResultListener(this)
     }
 
-    @Override
-    public void onDetachedFromActivityForConfigChanges() {
+    override fun onDetachedFromActivityForConfigChanges() {
     }
 
-    @Override
-    public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
-        this.mActivity = binding.getActivity();
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        mActivity = binding.activity
     }
 
-    @Override
-    public void onDetachedFromActivity() {
+    override fun onDetachedFromActivity() {}
+
+    override fun onMessage(message: Any?, reply: BasicMessageChannel.Reply<Any?>) {
+        val overlayMessageChannel: BasicMessageChannel<Any?> = BasicMessageChannel(
+            FlutterEngineCache.getInstance()[OverlayConstants.CACHED_TAG]!!.dartExecutor,
+            OverlayConstants.MESSENGER_TAG,
+            JSONMessageCodec.INSTANCE
+        )
+        overlayMessageChannel.send(message, reply)
     }
 
-    @Override
-    public void onMessage(@Nullable Object message, @NonNull BasicMessageChannel.Reply reply) {
-        BasicMessageChannel overlayMessageChannel = new BasicMessageChannel(
-                FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG)
-                        .getDartExecutor(),
-                OverlayConstants.MESSENGER_TAG, JSONMessageCodec.INSTANCE);
-        overlayMessageChannel.send(message, reply);
+    private fun checkOverlayPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(context)
+        } else true
     }
 
-    private boolean checkOverlayPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return Settings.canDrawOverlays(context);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == REQUEST_CODE_FOR_OVERLAY_PERMISSION) {
-            pendingResult.success(checkOverlayPermission());
-            return true;
+            pendingResult!!.success(checkOverlayPermission())
+            return true
         }
-        return false;
+        return false
     }
-
 }

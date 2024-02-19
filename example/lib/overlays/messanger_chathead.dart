@@ -15,7 +15,9 @@ class MessangerChatHead extends StatefulWidget {
 
 class _MessangerChatHeadState extends State<MessangerChatHead> {
   Color color = const Color(0xFFFFFFFF);
+
   BoxShape _currentShape = BoxShape.circle;
+
   static const String _kPortNameOverlay = 'OVERLAY';
   static const String _kPortNameHome = 'UI';
   final _receivePort = ReceivePort();
@@ -46,28 +48,28 @@ class _MessangerChatHeadState extends State<MessangerChatHead> {
       elevation: 0.0,
       child: GestureDetector(
         onTap: () async {
-          if (_currentShape == BoxShape.rectangle) {
-            await FlutterOverlayWindow.resizeOverlay(50, 100);
-            setState(() {
-              _currentShape = BoxShape.circle;
-            });
-          } else {
-            await FlutterOverlayWindow.resizeOverlay(
-              WindowSize.matchParent,
-              WindowSize.matchParent,
-            );
-            setState(() {
-              _currentShape = BoxShape.rectangle;
-            });
-          }
-          // await FlutterOverlayWindow.closeOverlay();
-          // await const AndroidIntent(
-          //   action: 'action_view',
-          //   category: 'category_launcher',
-          //   package: 'com.example.overlay_window',
-          //   componentName: 'flutter.overlay.window.flutter_overlay_window_example.MainActivity',
-          //   flags: [0x10000000],
-          // ).launch();
+          // if (_currentShape == BoxShape.rectangle) {
+          //   await FlutterOverlayWindow.resizeOverlay(50, 100);
+          //   setState(() {
+          //     _currentShape = BoxShape.circle;
+          //   });
+          // } else {
+          //   await FlutterOverlayWindow.resizeOverlay(
+          //     WindowSize.matchParent,
+          //     WindowSize.matchParent,
+          //   );
+          //   setState(() {
+          //     _currentShape = BoxShape.rectangle;
+          //   });
+          // }
+          await FlutterOverlayWindow.closeOverlay();
+          await const AndroidIntent(
+            action: 'action_view',
+            category: 'category_launcher',
+            package: 'com.example.overlay_window',
+            componentName: 'flutter.overlay.window.flutter_overlay_window_example.MainActivity',
+            flags: [0x10000000],
+          ).launch();
         },
         child: Container(
           height: MediaQuery.of(context).size.height,
