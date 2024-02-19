@@ -81,7 +81,6 @@ public abstract class WindowSetup {
         }
         if (alignment.equalsIgnoreCase("bottomRight")) {
             gravity = Gravity.BOTTOM | Gravity.RIGHT;
-            return;
         }
 
     }

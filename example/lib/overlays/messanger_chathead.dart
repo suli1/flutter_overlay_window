@@ -63,7 +63,7 @@ class _MessangerChatHeadState extends State<MessangerChatHead> {
         child: Container(
           height: MediaQuery.of(context).size.height,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.green,
             shape: _currentShape,
           ),
           child: Center(

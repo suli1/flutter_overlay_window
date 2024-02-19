@@ -72,8 +72,9 @@ class _HomePageState extends State<HomePage> {
                   flag: OverlayFlag.defaultFlag,
                   visibility: NotificationVisibility.visibilityPublic,
                   positionGravity: PositionGravity.auto,
+                  alignment: OverlayAlignment.topRight,
+                  width: 500,
                   height: 500,
-                  width: WindowSize.matchParent,
                 );
               },
               child: const Text("Show Overlay"),

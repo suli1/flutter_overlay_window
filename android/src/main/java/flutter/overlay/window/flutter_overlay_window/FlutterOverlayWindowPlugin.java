@@ -1,18 +1,14 @@
 package flutter.overlay.window.flutter_overlay_window;
 
 import android.app.Activity;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
-import android.service.notification.StatusBarNotification;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationManagerCompat;
 
 import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -47,7 +43,7 @@ public class FlutterOverlayWindowPlugin implements
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.CHANNEL_TAG);
         channel.setMethodCallHandler(this);
 
-        messenger = new BasicMessageChannel(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.MESSENGER_TAG,
+        messenger = new BasicMessageChannel<>(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.MESSENGER_TAG,
                 JSONMessageCodec.INSTANCE);
         messenger.setMessageHandler(this);
 
@@ -94,13 +90,12 @@ public class FlutterOverlayWindowPlugin implements
             WindowSetup.setNotificationVisibility(notificationVisibility);
 
             final Intent intent = new Intent(context, OverlayService.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             context.startService(intent);
             result.success(null);
         } else if (call.method.equals("isOverlayActive")) {
             result.success(OverlayService.isRunning);
-            return;
         } else if (call.method.equals("closeOverlay")) {
             if (OverlayService.isRunning) {
                 final Intent i = new Intent(context, OverlayService.class);
@@ -108,7 +103,6 @@ public class FlutterOverlayWindowPlugin implements
                 context.startService(i);
                 result.success(true);
             }
-            return;
         } else {
             result.notImplemented();
         }
