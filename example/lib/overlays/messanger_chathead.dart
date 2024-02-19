@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 
@@ -59,6 +60,14 @@ class _MessangerChatHeadState extends State<MessangerChatHead> {
               _currentShape = BoxShape.rectangle;
             });
           }
+          // await FlutterOverlayWindow.closeOverlay();
+          // await const AndroidIntent(
+          //   action: 'action_view',
+          //   category: 'category_launcher',
+          //   package: 'com.example.overlay_window',
+          //   componentName: 'flutter.overlay.window.flutter_overlay_window_example.MainActivity',
+          //   flags: [0x10000000],
+          // ).launch();
         },
         child: Container(
           height: MediaQuery.of(context).size.height,

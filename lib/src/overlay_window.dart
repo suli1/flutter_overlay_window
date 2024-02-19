@@ -8,10 +8,8 @@ class FlutterOverlayWindow {
   FlutterOverlayWindow._();
 
   static final StreamController _controller = StreamController();
-  static const MethodChannel _channel =
-      MethodChannel("x-slayer/overlay_channel");
-  static const MethodChannel _overlayChannel =
-      MethodChannel("x-slayer/overlay");
+  static const MethodChannel _channel = MethodChannel("x-slayer/overlay_channel");
+  static const MethodChannel _overlayChannel = MethodChannel("x-slayer/overlay");
   static const BasicMessageChannel _overlayMessageChannel =
       BasicMessageChannel("x-slayer/overlay_messenger", JSONMessageCodec());
 
@@ -20,13 +18,13 @@ class FlutterOverlayWindow {
   /// - Optional arguments:
   /// `height` the overlay height and default is [WindowSize.fullCover]
   /// `width` the overlay width and default is [WindowSize.matchParent]
-  /// `alignment` the alignment postion on screen and default is [OverlayAlignment.center]
+  /// `alignment` the alignment position on screen and default is [OverlayAlignment.center]
   /// `visibilitySecret` the detail displayed in notifications on the lock screen and default is [NotificationVisibility.visibilitySecret]
   /// `OverlayFlag` the overlay flag and default is [OverlayFlag.defaultFlag]
   /// `overlayTitle` the notification message and default is "overlay activated"
   /// `overlayContent` the notification message
   /// `enableDrag` to enable/disable dragging the overlay over the screen and default is "false"
-  /// `positionGravity` the overlay postion after drag and default is [PositionGravity.none]
+  /// `positionGravity` the overlay position after drag and default is [PositionGravity.none]
   static Future<void> showOverlay({
     int height = WindowSize.fullCover,
     int width = WindowSize.matchParent,
@@ -70,15 +68,15 @@ class FlutterOverlayWindow {
     try {
       return await _channel.invokeMethod<bool?>('requestPermission');
     } on PlatformException catch (error) {
-      log("Error requestPermession: $error");
+      log("Error requestPermission: $error");
       rethrow;
     }
   }
 
   /// Closes overlay if open
   static Future<bool?> closeOverlay() async {
-    final bool? _res = await _channel.invokeMethod('closeOverlay');
-    return _res;
+    final bool? res = await _channel.invokeMethod('closeOverlay');
+    return res;
   }
 
   /// Broadcast data to and from overlay app
@@ -97,27 +95,26 @@ class FlutterOverlayWindow {
 
   /// Update the overlay flag while the overlay in action
   static Future<bool?> updateFlag(OverlayFlag flag) async {
-    final bool? _res = await _overlayChannel
-        .invokeMethod<bool?>('updateFlag', {'flag': flag.name});
-    return _res;
+    final bool? res = await _overlayChannel.invokeMethod<bool?>('updateFlag', {'flag': flag.name});
+    return res;
   }
 
   /// Update the overlay size in the screen
   static Future<bool?> resizeOverlay(int width, int height) async {
-    final bool? _res = await _overlayChannel.invokeMethod<bool?>(
+    final bool? res = await _overlayChannel.invokeMethod<bool?>(
       'resizeOverlay',
       {
         'width': width,
         'height': height,
       },
     );
-    return _res;
+    return res;
   }
 
   /// Check if the current overlay is active
   static Future<bool> isActive() async {
-    final bool? _res = await _channel.invokeMethod<bool?>('isOverlayActive');
-    return _res ?? false;
+    final bool? res = await _channel.invokeMethod<bool?>('isOverlayActive');
+    return res ?? false;
   }
 
   /// Dispose overlay stream

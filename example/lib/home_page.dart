@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
                   flag: OverlayFlag.defaultFlag,
                   visibility: NotificationVisibility.visibilityPublic,
                   positionGravity: PositionGravity.auto,
-                  alignment: OverlayAlignment.topRight,
+                  alignment: OverlayAlignment.bottomRight,
                   width: 500,
                   height: 500,
                 );

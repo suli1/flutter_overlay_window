@@ -1,6 +1,7 @@
 package flutter.overlay.window.flutter_overlay_window;
 
 
+import android.util.Log;
 import android.view.Gravity;
 import android.view.WindowManager;
 
@@ -48,40 +49,25 @@ public abstract class WindowSetup {
     }
 
     static void setGravityFromAlignment(String alignment) {
+        Log.d("OverlayService", "setGravityFromAlignment: " + alignment);
         if (alignment.equalsIgnoreCase("topLeft")) {
             gravity = Gravity.TOP | Gravity.LEFT;
-            return;
-        }
-        if (alignment.equalsIgnoreCase("topCenter")) {
+        } else if (alignment.equalsIgnoreCase("topCenter")) {
             gravity = Gravity.TOP;
-        }
-        if (alignment.equalsIgnoreCase("topRight")) {
+        } else if (alignment.equalsIgnoreCase("topRight")) {
             gravity = Gravity.TOP | Gravity.RIGHT;
-            return;
-        }
-
-        if (alignment.equalsIgnoreCase("centerLeft")) {
+        } else if (alignment.equalsIgnoreCase("centerLeft")) {
             gravity = Gravity.CENTER | Gravity.LEFT;
-            return;
-        }
-        if (alignment.equalsIgnoreCase("center")) {
+        } else if (alignment.equalsIgnoreCase("center")) {
             gravity = Gravity.CENTER;
-        }
-        if (alignment.equalsIgnoreCase("centerRight")) {
+        } else if (alignment.equalsIgnoreCase("centerRight")) {
             gravity = Gravity.CENTER | Gravity.RIGHT;
-            return;
-        }
-
-        if (alignment.equalsIgnoreCase("bottomLeft")) {
+        } else if (alignment.equalsIgnoreCase("bottomLeft")) {
             gravity = Gravity.BOTTOM | Gravity.LEFT;
-            return;
-        }
-        if (alignment.equalsIgnoreCase("bottomCenter")) {
+        } else if (alignment.equalsIgnoreCase("bottomCenter")) {
             gravity = Gravity.BOTTOM;
-        }
-        if (alignment.equalsIgnoreCase("bottomRight")) {
+        } else if (alignment.equalsIgnoreCase("bottomRight")) {
             gravity = Gravity.BOTTOM | Gravity.RIGHT;
         }
-
     }
 }
