@@ -24,7 +24,6 @@ import android.view.View.OnTouchListener
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import flutter.overlay.window.flutter_overlay_window.FlutterOverlayWindowPlugin
 import io.flutter.embedding.android.FlutterTextureView
 import io.flutter.embedding.android.FlutterView
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -71,7 +70,6 @@ class OverlayService : Service(), OnTouchListener {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        mResources = applicationContext.resources
         val isCloseWindow = intent.getBooleanExtra(INTENT_EXTRA_IS_CLOSE_WINDOW, false)
         if (isCloseWindow) {
             if (windowManager != null) {
@@ -92,6 +90,8 @@ class OverlayService : Service(), OnTouchListener {
         }
         isRunning = true
         Log.d(TAG, "onStartCommand, Service started")
+
+        mResources = applicationContext.resources
         val engine = FlutterEngineCache.getInstance()[OverlayConstants.CACHED_TAG]
         val binaryMessenger: BinaryMessenger = engine!!.dartExecutor
         val flutterChannel = MethodChannel(binaryMessenger, OverlayConstants.OVERLAY_TAG)
