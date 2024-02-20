@@ -27,12 +27,11 @@ import androidx.core.app.NotificationCompat
 import io.flutter.embedding.android.FlutterTextureView
 import io.flutter.embedding.android.FlutterView
 import io.flutter.embedding.engine.FlutterEngineCache
-import io.flutter.plugin.common.BasicMessageChannel
 import io.flutter.plugin.common.BinaryMessenger
-import io.flutter.plugin.common.JSONMessageCodec
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.*
+import kotlin.math.abs
 
 class OverlayService : Service(), OnTouchListener {
     private var mStatusBarHeight = -1
@@ -95,11 +94,6 @@ class OverlayService : Service(), OnTouchListener {
         val engine = FlutterEngineCache.getInstance()[OverlayConstants.CACHED_TAG]
         val binaryMessenger: BinaryMessenger = engine!!.dartExecutor
         val flutterChannel = MethodChannel(binaryMessenger, OverlayConstants.OVERLAY_TAG)
-        val overlayMessageChannel = BasicMessageChannel(
-            binaryMessenger,
-            OverlayConstants.MESSENGER_TAG,
-            JSONMessageCodec.INSTANCE
-        )
         engine.lifecycleChannel.appIsResumed()
         flutterView = FlutterView(
             applicationContext, FlutterTextureView(
@@ -121,7 +115,6 @@ class OverlayService : Service(), OnTouchListener {
                 resizeOverlay(width, height, result)
             }
         }
-        overlayMessageChannel.setMessageHandler { message, _ -> WindowSetup.messenger?.send(message) }
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         windowManager!!.defaultDisplay.getSize(szWindow)
         val params = WindowManager.LayoutParams(
@@ -346,8 +339,8 @@ class OverlayService : Service(), OnTouchListener {
             mAnimationHandler.post {
                 params.x = 2 * (params.x - mDestX) / 3 + mDestX
                 params.y = 2 * (params.y - mDestY) / 3 + mDestY
-                windowManager!!.updateViewLayout(flutterView, params)
-                if (Math.abs(params.x - mDestX) < 2 && Math.abs(params.y - mDestY) < 2) {
+                windowManager?.updateViewLayout(flutterView, params)
+                if (abs(params.x - mDestX) < 2 && abs(params.y - mDestY) < 2) {
                     cancel()
                     trayAnimationTimer!!.cancel()
                 }

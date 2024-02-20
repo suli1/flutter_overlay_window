@@ -7,11 +7,10 @@ import 'package:flutter_overlay_window/src/overlay_config.dart';
 class FlutterOverlayWindow {
   FlutterOverlayWindow._();
 
-  static final StreamController _controller = StreamController();
+  static final StreamController _controller = StreamController.broadcast();
   static const MethodChannel _channel = MethodChannel("x-slayer/overlay_channel");
   static const MethodChannel _overlayChannel = MethodChannel("x-slayer/overlay");
-  static const BasicMessageChannel _overlayMessageChannel =
-      BasicMessageChannel("x-slayer/overlay_messenger", JSONMessageCodec());
+  static const MethodChannel _overlayMessageChannel = MethodChannel("x-slayer/overlay_messenger");
 
   /// Open overLay content
   ///
@@ -80,15 +79,18 @@ class FlutterOverlayWindow {
   }
 
   /// Broadcast data to and from overlay app
-  static Future shareData(dynamic data) async {
-    return await _overlayMessageChannel.send(data);
+  static Future<bool> shareData(dynamic data) async {
+    return await _overlayMessageChannel.invokeMethod('', data);
   }
 
   /// Streams message shared between overlay and main app
   static Stream<dynamic> get overlayListener {
-    _overlayMessageChannel.setMessageHandler((message) async {
-      _controller.add(message);
-      return message;
+    _overlayMessageChannel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'message':
+          _controller.add(call.arguments);
+          break;
+      }
     });
     return _controller.stream;
   }

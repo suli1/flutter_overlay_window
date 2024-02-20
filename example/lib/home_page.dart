@@ -1,6 +1,4 @@
 import 'dart:developer';
-import 'dart:isolate';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
@@ -13,25 +11,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const String _kPortNameOverlay = 'OVERLAY';
-  static const String _kPortNameHome = 'UI';
-  final _receivePort = ReceivePort();
-  SendPort? homePort;
-  String? latestMessageFromOverlay;
+  String? _latestMessageFromOverlay;
 
   @override
   void initState() {
     super.initState();
-    if (homePort != null) return;
-    final res = IsolateNameServer.registerPortWithName(
-      _receivePort.sendPort,
-      _kPortNameHome,
-    );
-    log("$res: OVERLAY");
-    _receivePort.listen((message) {
-      log("message from OVERLAY: $message");
+    FlutterOverlayWindow.overlayListener.listen((event) {
+      debugPrint('OverlayWindow > receive data from overlay: $event');
       setState(() {
-        latestMessageFromOverlay = 'Latest Message From Overlay: $message';
+        _latestMessageFromOverlay = 'Receive from overlay: $event';
       });
     });
   }
@@ -48,7 +36,7 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               onPressed: () async {
                 final status = await FlutterOverlayWindow.isPermissionGranted();
-                log("Is Permission Granted: $status");
+                debugPrint("Is Permission Granted: $status");
               },
               child: const Text("Check Permission"),
             ),
@@ -57,7 +45,7 @@ class _HomePageState extends State<HomePage> {
               onPressed: () async {
                 final bool? res =
                     await FlutterOverlayWindow.requestPermission();
-                log("status: $res");
+                debugPrint("status: $res");
               },
               child: const Text("Request Permission"),
             ),
@@ -67,12 +55,12 @@ class _HomePageState extends State<HomePage> {
                 if (await FlutterOverlayWindow.isActive()) return;
                 await FlutterOverlayWindow.showOverlay(
                   enableDrag: true,
-                  overlayTitle: "X-SLAYER",
-                  overlayContent: 'Overlay Enabled',
-                  flag: OverlayFlag.defaultFlag,
+                  // overlayTitle: "X-SLAYER",
+                  // overlayContent: 'Overlay Enabled',
+                  // flag: OverlayFlag.defaultFlag,
                   visibility: NotificationVisibility.visibilityPublic,
                   positionGravity: PositionGravity.auto,
-                  alignment: OverlayAlignment.bottomRight,
+                  alignment: OverlayAlignment.centerLeft,
                   width: 500,
                   height: 500,
                 );
@@ -83,7 +71,7 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               onPressed: () async {
                 final status = await FlutterOverlayWindow.isActive();
-                log("Is Active?: $status");
+                debugPrint("Is Active?: $status");
               },
               child: const Text("Is Active?"),
             ),
@@ -97,7 +85,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 10.0),
             TextButton(
               onPressed: () {
-                log('Try to close');
+                debugPrint('Try to close');
                 FlutterOverlayWindow.closeOverlay()
                     .then((value) => log('STOPPED: alue: $value'));
               },
@@ -106,14 +94,13 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 20.0),
             TextButton(
               onPressed: () {
-                homePort ??=
-                    IsolateNameServer.lookupPortByName(_kPortNameOverlay);
-                homePort?.send('Send to overlay: ${DateTime.now()}');
+                debugPrint('OverlayWindow > send data to overlay');
+                FlutterOverlayWindow.shareData({'type': 'send_to_overlay'});
               },
               child: const Text("Send message to overlay"),
             ),
             const SizedBox(height: 20),
-            Text(latestMessageFromOverlay ?? ''),
+            Text(_latestMessageFromOverlay ?? ''),
           ],
         ),
       ),
